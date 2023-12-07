@@ -5,7 +5,6 @@ set -e
 script_name="install.sh"
 domain=$1
 orgname=$2
-unit_file_location=/lib/systemd/system/cagent.service
 
 function eula_msg(){
   printf "
@@ -21,30 +20,30 @@ function check_args(){
     fi
 }
 
-function create_unit_file() {
-    printf "
-[Unit]
-Description=Python App Service
-After=multi-user.target
-
-[Service]
-Type=simple
-WorkingDirectory=/home/admin/
-ExecStart=/usr/bin/python3 /home/admin/app/app.py
-User=admin
-
-[Install]
-WantedBy=multi-user.target" > $unit_file_location
+function install_agent() {
+    mkdir -p /opt/Cylerian
+    cp -u cagent /opt/Cylerian
+    cd /opt/Cylerian
+    ./cagent install -d $domain --on $orgname
+    cd -
 }
 
 check_args
 
 eula_msg
 
-read -p "Do you accept the EULA?" -n 1 -r
+read -p "Do you accept the EULA? (y/n): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo
 else
-    echo "Install of agent aborted, user must accept EULA"
+    echo "Install of agent aborted, user must accept EULA to proceed with install"
+    exit 0
+fi
+
+install_agent
+
+# if systemd, enable restart
+if [[ $(ps --no-headers -o comm 1) == *system* ]]; then
+    systemctl enable cagent.service
 fi
