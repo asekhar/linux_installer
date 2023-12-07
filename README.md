@@ -10,3 +10,11 @@ chmod +x cagent
 ```
 ./install.sh domain1 org1
 ```
+
+## To Do
+
+- [x] Installs Application
+- [x] Handles systemd
+- [ ] EULA wording
+- [x] User Must Accept EULA
+- [ ] Handles init
