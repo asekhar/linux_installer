@@ -5,6 +5,7 @@ set -e
 script_name="install.sh"
 domain=$1
 orgname=$2
+current_service=cagent
 
 function eula_msg(){
   printf "
@@ -43,7 +44,29 @@ fi
 
 install_agent
 
-# if systemd, enable restart
-if [[ $(ps --no-headers -o comm 1) == *system* ]]; then
-    systemctl enable cagent.service
+if [[ $($sudo_cmd ps --no-headers -o comm 1 2>&1) == "systemd" ]] && command -v systemctl 2>&1; then
+
+    systemctl enable ${current_service}.service
+    
+    # Use systemd if systemctl binary exists and systemd is the init process
+    restart_cmd="$sudo_cmd systemctl restart ${current_service}.service"
+    stop_instructions="$sudo_cmd systemctl stop $current_service"
+    start_instructions="$sudo_cmd systemctl start $current_service"
+
+  elif /sbin/init --version 2>&1 | grep -q upstart; then
+    
+    # Try to detect Upstart, this works most of the times but still a best effort
+    restart_cmd="$sudo_cmd stop $current_service || true ; sleep 2s ; $sudo_cmd start $current_service"
+    stop_instructions="$sudo_cmd stop $current_service"
+    start_instructions="$sudo_cmd start $current_service"
 fi
+
+eval "$restart_cmd"
+
+printf "\033[32m  If you ever want to stop the agent, run:
+
+      $stop_instructions
+
+  And to run it again run:
+
+      $start_instructions\033[0m\n\n"
