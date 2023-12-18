@@ -15,6 +15,6 @@ chmod +x cagent
 
 - [x] Installs Application
 - [x] Handles systemd
-- [ ] EULA wording
+- [x] EULA wording
 - [x] User Must Accept EULA
-- [ ] Handles init
+- [x] Handles init
